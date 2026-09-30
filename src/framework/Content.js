@@ -1,3 +1,4 @@
+import { canAccessCard } from "./cardAccess";
 import React, { useState, useEffect, useRef } from "react";
 import { ItemTypes } from "./ItemTypes";
 import { useDrop } from "react-dnd";
@@ -48,7 +49,7 @@ const clampXForWidth = (x, w) => Math.max(0, Math.min(x, DASHBOARD_COLUMNS - w))
 const toGridLayout = (items) =>
   items.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }));
 
-const Content = ({ layoutData, onAddItem, onRemoveItem, onCommitGridLayout, layoutLocked, canManageAnnouncements = false }) => {
+const Content = ({ layoutData, onAddItem, onRemoveItem, onCommitGridLayout, layoutLocked, dashboardAccess = null }) => {
   const [showPlaceholder, setShowPlaceholder] = useState(false);
   const [placeholderPos, setPlaceholderPos] = useState({ x: 0, y: 0 });
   const [placeholderSize, setPlaceholderSize] = useState({ w: 4, h: 10 });
@@ -57,7 +58,7 @@ const Content = ({ layoutData, onAddItem, onRemoveItem, onCommitGridLayout, layo
   const gridRef = useRef(null);
   const items = (Array.isArray(layoutData) ? layoutData : []).filter((item) => {
     const config = getCardConfig(item.name);
-    return config && (!config.adminOnly || canManageAnnouncements);
+    return canAccessCard(CARD_NAME_ALIASES[item.name] || item.name, config, dashboardAccess);
   });
   const gridLayout = toGridLayout(items);
 
@@ -90,6 +91,7 @@ const Content = ({ layoutData, onAddItem, onRemoveItem, onCommitGridLayout, layo
 
   // Function to add a new element
   const addNewElement = (item, dropPosition) => {
+    if (!canAccessCard(item.name, getCardConfig(item.name), dashboardAccess)) return;
     if (layoutLocked) {
       toast.error('Cannot add elements - layout is locked', {
         duration: 2000,

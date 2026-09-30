@@ -1,3 +1,4 @@
+import { canAccessCard } from "./cardAccess";
 //Imports
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Menu, Transition } from '@headlessui/react';
@@ -81,7 +82,7 @@ const Banner = ({ setRunTour }) => {
   const [loadingLayouts, setLoadingLayouts] = useState(true);
   const [layoutLocked, setLayoutLocked] = useState(false);
   const [dashboardUpdatedAt, setDashboardUpdatedAt] = useState(new Date());
-  const [canManageAnnouncements, setCanManageAnnouncements] = useState(false);
+  const [dashboardAccess, setDashboardAccess] = useState(null);
 
   const { hideChatbot, showChatbot } = useChatbotVisibility();
   const { theme, themeName, setTheme, themes, cardFontSize, setCardFontSize, cardFontSizes, fontFamily, setFontFamily, fontFamilies } = useTheme();
@@ -223,22 +224,22 @@ const Banner = ({ setRunTour }) => {
       const defaultLayout = defaultLayoutRef.current;
 
       try {
-        let announcementManagerAllowed = false;
+        let access = null;
         try {
-          const capabilityResponse = await sharedGet(`${get_base_url()}/api/announcements`);
+          const capabilityResponse = await sharedGet(`${get_base_url()}/api/dashboard-access`);
           if (capabilityResponse.ok) {
             const capabilityData = await capabilityResponse.json();
-            announcementManagerAllowed = capabilityData?.can_manage === true;
+            access = capabilityData;
           }
         } catch (capabilityError) {
-          console.warn("Unable to determine announcement management access:", capabilityError);
+          console.warn("Unable to determine dashboard access:", capabilityError);
         }
         const validCardNames = new Set(
           Object.keys(CardConfig).filter(
-            (name) => !CardConfig[name].adminOnly || announcementManagerAllowed
+            (name) => canAccessCard(name, CardConfig[name], access)
           )
         );
-        setCanManageAnnouncements(announcementManagerAllowed);
+        if (!cancelled) setDashboardAccess(access);
         const savedLayoutPreference = await loadDashboardLayoutPreference();
         const hasSavedLayout = savedLayoutPreference && Array.isArray(savedLayoutPreference.layout);
         const restoredLayout = mergeDashboardLayout(
@@ -331,6 +332,7 @@ const Banner = ({ setRunTour }) => {
   }, [markLayoutEdited]);
 
   const addDashboardItem = useCallback((newItem) => {
+    if (!canAccessCard(newItem.name, CardConfig[newItem.name], dashboardAccess)) return;
     commitLayout(
       (currentLayout) =>
         currentLayout.some((item) => item.name === newItem.name)
@@ -338,7 +340,7 @@ const Banner = ({ setRunTour }) => {
           : [...currentLayout, newItem],
       { markEdited: true }
     );
-  }, [commitLayout]);
+  }, [commitLayout, dashboardAccess]);
 
   const removeDashboardItem = useCallback((itemId) => {
     commitLayout(
@@ -401,7 +403,7 @@ const Banner = ({ setRunTour }) => {
         Array.isArray(fetchedLayout?.["0"]);
       const validCardNames = new Set(
         Object.keys(CardConfig).filter(
-          (name) => !CardConfig[name].adminOnly || canManageAnnouncements
+          (name) => canAccessCard(name, CardConfig[name], dashboardAccess)
         )
       );
       const normalizedLayout = normalizeDashboardLayout(
@@ -721,7 +723,7 @@ const Banner = ({ setRunTour }) => {
                   onRemoveItem={removeDashboardItem}
                   onCommitGridLayout={commitGridLayout}
 	          layoutLocked={layoutLocked}
-                  canManageAnnouncements={canManageAnnouncements}
+                  dashboardAccess={dashboardAccess}
                 />
               ) : (
                 <div className="flex min-h-[240px] items-center justify-center text-card-14 font-semibold text-mosaic-secondary">
@@ -812,7 +814,7 @@ const Banner = ({ setRunTour }) => {
             </div>
 
             <div className={`${sidebarMaximized ? 'h-[calc(80vh-64px)]' : 'h-[calc(40vh-64px)]'} transition-all duration-300`}>
-	      <Sidebar canManageAnnouncements={canManageAnnouncements} />
+	      <Sidebar dashboardAccess={dashboardAccess} />
             </div>
 	  </div>
         </div>

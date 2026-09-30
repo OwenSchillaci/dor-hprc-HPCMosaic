@@ -94,3 +94,6 @@ from . import projects     # /projectinfo, /set_default_account
 from . import bot_requests # /quota, /group, /help, /software, /account, /submit_acknowledgement
 from . import announcement # /announcements
 from . import priority     # /priority/queue-insight
+
+from . import access       # /dashboard-access
+from . import group_usage  # /group-usage

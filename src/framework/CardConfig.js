@@ -14,6 +14,7 @@ import Composer from '../elements/Composer';
 import AcknowledgementForm from '../elements/AcknowledgementForm';
 import ClusterStatus from '../elements/ClusterStatus';
 import SoftwareModulesPage from '../elements/SoftwareModulesPage';
+import GroupUsage from "../elements/GroupUsage";
 import AnnouncementManager from '../elements/AnnouncementManager';
 import {
     AccountsUsageSummaryCard,
@@ -145,12 +146,20 @@ const CardConfig = {
         minW: 1,
         minH: 1
     },
+    "Group Usage": {
+        description: "Compute usage for members of your Linux team groups.",
+        icon: <AiOutlineUser size={30}/>,
+        chartComponent: GroupUsage,
+        category: "user",
+        requiredCapability: "group_usage",
+        defaultW: 9, defaultH: 18, minW: 3, minH: 10
+    },
     "Announcement Manager": {
         description: "Create, edit, schedule, remove, and prioritize dashboard announcements.",
         icon: <AiOutlineCode size={30}/>,
         chartComponent: AnnouncementManager,
         category: "system",
-        adminOnly: true,
+        requiredCapability: "manage_announcements",
         defaultW: 8,
         defaultH: 22,
         minW: 6,

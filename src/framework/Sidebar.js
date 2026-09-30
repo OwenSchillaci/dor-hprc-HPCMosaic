@@ -1,8 +1,9 @@
+import { canAccessCard } from "./cardAccess";
 import React, { useState } from "react";
 import CardConfig from "./CardConfig";
 import { MdSearch, MdFilterList, MdGridView, MdViewList } from "react-icons/md";
 
-const Sidebar = ({ canManageAnnouncements = false }) => {
+const Sidebar = ({ dashboardAccess = null }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
   const [categories, setCategories] = useState({
@@ -13,7 +14,7 @@ const Sidebar = ({ canManageAnnouncements = false }) => {
   });
 
   const list = Object.keys(CardConfig).filter(
-    name => !CardConfig[name].adminOnly || canManageAnnouncements
+    name => canAccessCard(name, CardConfig[name], dashboardAccess)
   );
 
   // Filter elements based on search and category filters
